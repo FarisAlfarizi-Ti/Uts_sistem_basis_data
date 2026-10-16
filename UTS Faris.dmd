@@ -1,0 +1,8 @@
+<?xml version = '1.0' encoding = 'UTF-8'?>
+<OSDM_Design class="oracle.dbtools.crest.model.design.Design" name="UTS Faris" id="D04B99F1-B1C3-FB7E-B717-089A7BC7A58A" version="3.5">
+<createdBy>USER</createdBy>
+<createdTime>2026-10-16 01:34:38 UTC</createdTime>
+<ownerDesignName>UTS Faris</ownerDesignName>
+<capitalNames>false</capitalNames>
+<designId>D04B99F1-B1C3-FB7E-B717-089A7BC7A58A</designId>
+</OSDM_Design>
