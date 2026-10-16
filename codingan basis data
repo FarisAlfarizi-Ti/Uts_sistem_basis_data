@@ -1,0 +1,74 @@
+CREATE TABLE Hotel (
+    hotelNo    VARCHAR(4)  NOT NULL,
+    hotelName  VARCHAR(30) NOT NULL,
+    city       VARCHAR(30) NOT NULL,
+    CONSTRAINT pk_hotel PRIMARY KEY (hotelNo)
+);
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+CREATE TABLE Room (
+    roomNo   SMALLINT     NOT NULL,
+    hotelNo  VARCHAR(4)   NOT NULL,
+    type     VARCHAR(10)  NOT NULL DEFAULT 'Single',
+    price    NUMERIC(5,2) NOT NULL,
+    CONSTRAINT pk_room PRIMARY KEY (roomNo, hotelNo),
+    CONSTRAINT fk_room_hotel FOREIGN KEY (hotelNo) REFERENCES Hotel(hotelNo)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT chk_room_type  CHECK (type IN ('Single','Double','Family')),
+    CONSTRAINT chk_room_price CHECK (price BETWEEN 10 AND 100),
+    CONSTRAINT chk_room_no    CHECK (roomNo BETWEEN 1 AND 100)
+);
+CREATE TABLE Guest (
+    guestNo       VARCHAR(4)  NOT NULL,
+    guestName     VARCHAR(30) NOT NULL,
+    guestAddress  VARCHAR(50),
+    CONSTRAINT pk_guest PRIMARY KEY (guestNo)
+);
+CREATE TABLE Booking (
+    hotelNo   VARCHAR(4) NOT NULL,
+    guestNo   VARCHAR(4) NOT NULL,
+    dateFrom  DATE       NOT NULL,
+    dateTo    DATE       NOT NULL,
+    roomNo    SMALLINT   NOT NULL,
+    CONSTRAINT pk_booking PRIMARY KEY (hotelNo, guestNo, dateFrom),
+    CONSTRAINT fk_booking_hotel FOREIGN KEY (hotelNo) REFERENCES Hotel(hotelNo)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_booking_guest FOREIGN KEY (guestNo) REFERENCES Guest(guestNo)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+    CONSTRAINT fk_booking_room FOREIGN KEY (roomNo, hotelNo) REFERENCES Room(roomNo, hotelNo)
+        ON DELETE CASCADE ON UPDATE CASCADE,
+
+    CONSTRAINT chk_date_from CHECK (dateFrom > CURRENT_DATE),
+    CONSTRAINT chk_date_to   CHECK (dateTo   > CURRENT_DATE),
+    CONSTRAINT chk_date_order CHECK (dateTo > dateFrom),
+
+    CONSTRAINT no_double_booking EXCLUDE USING gist (
+        hotelNo WITH =, roomNo WITH =,
+        daterange(dateFrom, dateTo) WITH &&
+    ),
+
+    CONSTRAINT no_guest_overlap EXCLUDE USING gist (
+        guestNo WITH =,
+        daterange(dateFrom, dateTo) WITH &&
+    )
+);
+
+INSERT INTO Hotel VALUES ('H001', 'Grand Hotel', 'Jakarta');
+INSERT INTO Room  VALUES (1, 'H001', 'Single', 50.00);
+INSERT INTO Guest VALUES ('G001', 'Budi Santoso', 'Tangerang');
+INSERT INTO Guest VALUES ('G002', 'Siti Aminah', 'Depok');
+
+INSERT INTO Booking VALUES ('H001', 'G001', '2026-12-01', '2026-12-05', 1);
+
+INSERT INTO Room VALUES (2, 'H001', 'Suite', 50.00);
+
+INSERT INTO Room VALUES (3, 'H001', 'Double', 500.00);
+
+INSERT INTO Room VALUES (101, 'H001', 'Double', 50.00);
+
+INSERT INTO Booking VALUES ('H001', 'G002', '2020-01-01', '2020-01-03', 1);
+
+INSERT INTO Booking VALUES ('H001', 'G002', '2026-12-03', '2026-12-07', 1);
+
+INSERT INTO Room VALUES (2, 'H001', 'Double', 60.00);
+INSERT INTO Booking VALUES ('H001', 'G001', '2026-12-03', '2026-12-07', 2);
+INSERT INTO Booking VALUES ('H001', 'G002', '2026-12-10', '2026-12-12', 1);
